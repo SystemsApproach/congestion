@@ -706,6 +706,8 @@ IntServ. Because of these concerns, other approaches that do not
 require so much "per-flow" state have been developed. The next section
 discusses a number of such approaches.
 
+{% include "../sidebars/atm-qos.md" %}
+
 ## Differentiated Services (EF, AF)
 
 Whereas the Integrated Services architecture allocates resources to
@@ -974,3 +976,5 @@ down, such that this relationship continues to hold. Of course, it is
 still up to the application to adapt to these changes in the available
 rate, but as we will see in the next chapter, many real-time
 applications are quite adaptable.
+
+{% include "../sidebars/diff-serve.md" %}

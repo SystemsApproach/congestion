@@ -456,6 +456,8 @@ whenever a coarse-grained timeout occurs. At all other times, the
 congestion window is following a pure additive increase/multiplicative
 decrease pattern.
 
+{% include "../sidebars/tcp-wireless.md" %}
+
 ## TCP CUBIC
 
 A variant of the standard TCP algorithm just described, called CUBIC,

@@ -420,6 +420,8 @@ rate. The algorithm, TCP Vegas, is not widely deployed in the
 Internet today, but the strategy it uses has been adopted by other
 implementations that are now being deployed.
 
+{% include "../sidebars/tahoe-vegas.md" %}
+
 The intuition behind the Vegas algorithm can be seen in the trace of
 standard TCP given in [Figure 5](#trace3). The top graph shown in
 [Figure 5](#trace3) traces the connection's congestion window; it shows
@@ -590,6 +592,8 @@ focus is fairness. For example, some experiments show CUBIC flows get
 experiments show that unfairness among BBR flows is even
 possible. Another major focus is avoiding high retransmission rates,
 where in some cases as many as 10% of packets are retransmitted.
+
+{% include "../sidebars/new-alg.md" %}
 
 ### DCTCP
 
