@@ -263,7 +263,9 @@ of packets is providing more candidates for random dropping. Thus, there
 is some sense of fair resource allocation built into RED, although it is
 by no means precise.
 
-> [!Note|style:flat|label:Key Takeaway|iconVisibility:hidden]
+<!--- [!Note|style:flat|label:Key Takeaway|iconVisibility:hidden] --->
+> **Key Takeaway**
+>
 > Note that a fair amount of analysis has gone into setting the various
 > RED parameters—for example, and `Weight`—all in the name of
 > optimizing the power function (throughput-to-delay ratio). The

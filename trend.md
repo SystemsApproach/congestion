@@ -87,7 +87,9 @@ begins. In short, layer boundaries become soft (and easy to move) when
 the layers are implemented in software rather than hardware. This is
 increasingly becoming the norm.
 
-> [!NOTE|label:Broader Perspective]
+<!--- > [!NOTE|label:Broader Perspective] --->
+> **Broader Perspective**
+>
 > To continue reading about the cloudification of the Internet, see
 > [Big Data and Analytics](../data/trend.md).
 >

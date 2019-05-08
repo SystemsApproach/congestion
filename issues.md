@@ -70,7 +70,9 @@ on shared-access networks (e.g., Ethernet and Wi-Fi). These
 access-control algorithms are, in some sense, analogous to
 congestion-control algorithms in a switched network.
 
-> [!Note|style:flat|label:Key Takeaway|iconVisibility:hidden]
+<!--- [!Note|style:flat|label:Key Takeaway|iconVisibility:hidden] --->
+> **Key Takeaway**
+>
 > Note that congestion control is a different problem than routing. While
 > it is true that a congested link could be assigned a large edge weight
 > by the routing protocol, and, as a consequence, routers would route
