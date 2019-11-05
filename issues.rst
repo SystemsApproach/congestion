@@ -1,4 +1,5 @@
-# {{ page.title }}
+6.1 Issues in Resource Allocation
+=================================
 
 Resource allocation and congestion control are complex issues that have
 been the subject of much study ever since the first network was
@@ -40,14 +41,16 @@ intended to keep a set of senders from sending too much data *into the
 network* because of lack of resources at some point. These two concepts
 are often confused; as we will see, they also share some mechanisms.
 
-## Network Model
+Network Model
+-------------
 
 We begin by defining three salient features of the network architecture.
 For the most part, this is a summary of material presented in the
 previous chapters that is relevant to the problem of resource
 allocation.
 
-### Packet-Switched Network
+Packet-Switched Network
+~~~~~~~~~~~~~~~~~~~~~~~
 
 We consider resource allocation in a packet-switched network (or
 internet) consisting of multiple links and switches (or routers). Since
@@ -60,57 +63,58 @@ an internetwork.
 In such an environment, a given source may have more than enough
 capacity on the immediate outgoing link to send a packet, but somewhere
 in the middle of a network its packets encounter a link that is being
-used by many different traffic sources. [Figure 1](#congestion)
-illustrates this situation—two high-speed links are feeding a
-low-speed link. This is in contrast to shared-access networks like
-Ethernet and wireless networks, where the source can directly observe
-the traffic on the network and decide accordingly whether or not to send
-a packet. We have already seen the algorithms used to allocate bandwidth
-on shared-access networks (e.g., Ethernet and Wi-Fi). These
-access-control algorithms are, in some sense, analogous to
-congestion-control algorithms in a switched network.
+used by many different traffic sources. :numref:`Figure %s <fig-congestion>`
+illustrates this situation—two high-speed links are feeding a low-speed
+link. This is in contrast to shared-access networks like Ethernet and
+wireless networks, where the source can directly observe the traffic on
+the network and decide accordingly whether or not to send a packet. We
+have already seen the algorithms used to allocate bandwidth on
+shared-access networks (e.g., Ethernet and Wi-Fi). These access-control
+algorithms are, in some sense, analogous to congestion-control
+algorithms in a switched network.
 
-<!--- [!Note|style:flat|label:Key Takeaway|iconVisibility:hidden] --->
-> **Key Takeaway**
->
-> Note that congestion control is a different problem than routing. While
-> it is true that a congested link could be assigned a large edge weight
-> by the routing protocol, and, as a consequence, routers would route
-> around it, "routing around" a congested link does not generally solve
-> the congestion problem. To see this, we need look no further than the
-> simple network depicted in [Figure 1](#congestion), where all traffic
-> has to flow through the same router to reach the destination. Although
-> this is an extreme example, it is common to have a certain router that
-> it is not possible to route around. This router can become congested,
-> and there is nothing the routing mechanism can do about it. This
-> congested router is sometimes called the *bottleneck* router.
+.. admonition:: Key Takeaway
 
-### Connectionless Flows
+   Note that congestion control is a different problem than routing.
+   While it is true that a congested link could be assigned a large edge
+   weight by the routing protocol, and, as a consequence, routers would
+   route around it, “routing around” a congested link does not generally
+   solve the congestion problem. To see this, we need look no further
+   than the simple network depicted in :numref:`Figure %s <fig-congestion>`,
+   where all traffic has to flow through the same router to reach the
+   destination. Although this is an extreme example, it is common to
+   have a certain router that it is not possible to route around. This
+   router can become congested, and there is nothing the routing
+   mechanism can do about it. This congested router is sometimes called
+   the *bottleneck* router.
+
+Connectionless Flows
+~~~~~~~~~~~~~~~~~~~~
 
 For much of our discussion, we assume that the network is essentially
 connectionless, with any connection-oriented service implemented in the
 transport protocol that is running on the end hosts. (We explain the
-qualification "essentially" in a moment.) This is precisely the model of
+qualification “essentially” in a moment.) This is precisely the model of
 the Internet, where IP provides a connectionless datagram delivery
 service and TCP implements an end-to-end connection abstraction. Note
 that this assumption does not hold in virtual circuit networks such as
 ATM and X.25. In such networks, a connection setup message traverses the
 network when a circuit is established. This setup message reserves a set
 of buffers for the connection at each router, thereby providing a form
-of congestion control—a connection is established only if enough
-buffers can be allocated to it at each router. The major shortcoming of
-this approach is that it leads to an underutilization of
-resources—buffers reserved for a particular circuit are not available
-for use by other traffic even if they were not currently being used by
-that circuit. The focus of this chapter is on resource allocation
-approaches that apply in an internetwork, and thus we focus mainly on
-connectionless networks.
+of congestion control—a connection is established only if enough buffers
+can be allocated to it at each router. The major shortcoming of this
+approach is that it leads to an underutilization of resources—buffers
+reserved for a particular circuit are not available for use by other
+traffic even if they were not currently being used by that circuit. The
+focus of this chapter is on resource allocation approaches that apply in
+an internetwork, and thus we focus mainly on connectionless networks.
+   
+.. _fig-congestion:
+.. figure:: figures/f06-01-9780123850591.png
+   :width: 500px
+   :align: center
 
-<figure class="line">
-	<a id="congestion"></a>
-	<img src="figures/f06-01-9780123850591.png" width="500px"/>
-	<figcaption>A potential bottleneck router.</figcaption>
-</figure>
+   A potential bottleneck router.
 
 We need to qualify the term *connectionless* because our classification
 of networks as being either connectionless or connection oriented is a
@@ -119,28 +123,29 @@ assumption that all datagrams are completely independent in a
 connectionless network is too strong. The datagrams are certainly
 switched independently, but it is usually the case that a stream of
 datagrams between a particular pair of hosts flows through a particular
-set of routers. This idea of a *flow*—a sequence of packets sent
-between a source/destination pair and following the same route through
-the network—is an important abstraction in the context of resource
+set of routers. This idea of a *flow*—a sequence of packets sent between
+a source/destination pair and following the same route through the
+network—is an important abstraction in the context of resource
 allocation; it is one that we will use in this chapter.
 
 One of the powers of the flow abstraction is that flows can be defined
 at different granularities. For example, a flow can be host-to-host
 (i.e., have the same source/destination host addresses) or
 process-to-process (i.e., have the same source/destination host/port
-pairs). In the latter case, a flow is essentially the same as a channel,
-as we have been using that term throughout this book. The reason we
-introduce a new term is that a flow is visible to the routers inside the
-network, whereas a channel is an end-to-end abstraction.
-[Figure 2](#flow) illustrates several flows passing through a series of
-routers.
+pairs). In the latter case, a flow is essentially the same as a
+channel, as we have been using that term throughout this book. The
+reason we introduce a new term is that a flow is visible to the
+routers inside the network, whereas a channel is an end-to-end
+abstraction. :numref:`Figure %s <fig-flow>` illustrates several flows
+passing through a series of routers.
+   
+.. _fig-flow:
+.. figure:: figures/f06-02-9780123850591.png
+   :width: 500px
+   :align: center
 
-<figure class="line">
-	<a id="flow"></a>
-	<img src="figures/f06-02-9780123850591.png" width="500px"/>
-	<figcaption>Multiple flows passing through a set of routers.</figcaption>
-</figure>
-
+   Multiple flows passing through a set of routers.
+   
 Because multiple related packets flow through each router, it sometimes
 makes sense to maintain some state information for each flow,
 information that can be used to make resource allocation decisions about
@@ -171,7 +176,8 @@ ordered delivery of a virtual circuit. It simply exists for the purpose
 of resource allocation. We will see examples of both implicit and
 explicit flows in this chapter.
 
-### Service Model
+Service Model
+~~~~~~~~~~~~~
 
 In the early part of this chapter, we will focus on mechanisms that
 assume the best-effort service model of the Internet. With best-effort
@@ -188,7 +194,8 @@ of QoS. One of the greatest challenges is to define a service model that
 meets the needs of a wide range of applications and even allows for the
 applications that will be invented in the future.
 
-## Taxonomy
+Taxonomy
+--------
 
 There are countless ways in which resource allocation mechanisms differ,
 so creating a thorough taxonomy is a difficult proposition. For now, we
@@ -196,7 +203,8 @@ describe three dimensions along which resource allocation mechanisms can
 be characterized; more subtle distinctions will be called out during the
 course of this chapter.
 
-### Router-Centric versus Host-Centric {#sec:centric}
+Router-Centric versus Host-Centric
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Resource allocation mechanisms can be classified into two broad groups:
 those that address the problem from inside the network (i.e., at the
@@ -220,21 +228,22 @@ networks that use end-to-end congestion control still have some policy,
 no matter how simple, for deciding which packets to drop when their
 queues do overflow.
 
-### Reservation-Based versus Feedback-Based
+Reservation-Based versus Feedback-Based
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 A second way that resource allocation mechanisms are sometimes
 classified is according to whether they use *reservations* or
 *feedback*. In a reservation-based system, some entity (e.g., the end
 host) asks the network for a certain amount of capacity to be allocated
 for a flow. Each router then allocates enough resources (buffers and/or
-percentage of the link's bandwidth) to satisfy this request. If the
+percentage of the link’s bandwidth) to satisfy this request. If the
 request cannot be satisfied at some router, because doing so would
 overcommit its resources, then the router rejects the reservation. This
 is analogous to getting a busy signal when trying to make a phone call.
 In a feedback-based approach, the end hosts begin sending data without
 first reserving any capacity and then adjust their sending rate
 according to the feedback they receive. This feedback can be either
-*explicit* (i.e., a congested router sends a "please slow down" message
+*explicit* (i.e., a congested router sends a “please slow down” message
 to the host) or *implicit* (i.e., the end host adjusts its sending rate
 according to the externally observable behavior of the network, such as
 packet losses).
@@ -245,7 +254,7 @@ responsible for keeping track of how much of its capacity is currently
 available and deciding whether new reservations can be admitted. Routers
 may also have to make sure each host lives within the reservation it
 made. If a host sends data faster than it claimed it would when it made
-the reservation, then that host's packets are good candidates for
+the reservation, then that host’s packets are good candidates for
 discarding, should the router become congested. On the other hand, a
 feedback-based system can imply either a router- or host-centric
 mechanism. Typically, if the feedback is explicit, then the router is
@@ -257,7 +266,8 @@ Reservations do not have to be made by end hosts. It is possible for a
 network administrator to allocate resources to flows or to larger
 aggregates of traffic, as we will see in a later section.
 
-### Window Based versus Rate Based
+Window Based versus Rate Based
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 A third way to characterize resource allocation mechanisms is according
 to whether they are *window based* or *rate based*. This is one of the
@@ -270,12 +280,12 @@ window-based transport protocols, such as TCP, in which the receiver
 advertises a window to the sender. This window corresponds to how much
 buffer space the receiver has, and it limits how much data the sender
 can transmit; that is, it supports flow control. A similar
-mechanism—window advertisement—can be used within the network to
-reserve buffer space (i.e., to support resource allocation). TCP's
+mechanism—window advertisement—can be used within the network to reserve
+buffer space (i.e., to support resource allocation). TCP’s
 congestion-control mechanisms are window based.
 
-It is also possible to control a sender's behavior using a rate—that
-is, how many bits per second the receiver or network is able to absorb.
+It is also possible to control a sender’s behavior using a rate—that is,
+how many bits per second the receiver or network is able to absorb.
 Rate-based control makes sense for many multimedia applications, which
 tend to generate data at some average rate and which need at least some
 minimum throughput to be useful. For example, a video codec might
@@ -286,7 +296,8 @@ different qualities of service—the sender makes a reservation for so
 many bits per second, and each router along the path determines if it
 can support that rate, given the other flows it has made commitments to.
 
-### Summary of Resource Allocation Taxonomy
+Summary of Resource Allocation Taxonomy
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Classifying resource allocation approaches at two different points along
 each of three dimensions, as we have just done, would seem to suggest up
@@ -311,7 +322,8 @@ is natural to express such reservations in terms of rate, since windows
 are only indirectly related to how much bandwidth a user needs from the
 network. We discuss this topic in a later section.
 
-## Evaluation Criteria
+Evaluation Criteria
+-------------------
 
 The final issue is one of knowing whether a resource allocation
 mechanism is good or not. Recall that in the problem statement at the
@@ -320,7 +332,8 @@ start of this chapter we posed the question of how a network
 least two broad measures by which a resource allocation scheme can be
 evaluated. We consider each in turn.
 
-### Effective Resource Allocation
+Effective Resource Allocation
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 A good starting point for evaluating the effectiveness of a resource
 allocation scheme is to consider the two principal metrics of
@@ -340,34 +353,36 @@ using the ratio of throughput to delay as a metric for evaluating the
 effectiveness of a resource allocation scheme. This ratio is sometimes
 referred to as the *power* of the network:
 
-```pseudo
-Power = Throughput / Delay
-```
+::
 
-Note that it is not
-obvious that power is the right metric for judging resource allocation
-effectiveness. For one thing, the theory behind power is based on an
-M/M/1 queuing network that assumes infinite queues; real networks
-have finite buffers and sometimes have to drop packets. For another,
-power is typically defined relative to a single connection (flow); it is
-not clear how it extends to multiple, competing connections. Despite
-these rather severe limitations, however, no alternatives have gained
-wide acceptance, and so power continues to be used.
+   Power = Throughput / Delay
 
-> Since this is not a queuing theory book, we provide only this 
-> brief description of an M/M/1 queue. The 1 means it has a single 
-> server, and the Ms mean that the distribution of both packet arrival 
-> and service times is "Markovian," or exponential. 
+Note that it is not obvious that power is the right metric for judging
+resource allocation effectiveness. For one thing, the theory behind
+power is based on an M/M/1 queuing network that assumes infinite
+queues;\ [*]_ real networks have finite buffers and sometimes have to
+drop packets.  For another, power is typically defined relative to a
+single connection (flow); it is not clear how it extends to multiple,
+competing connections. Despite these rather severe limitations,
+however, no alternatives have gained wide acceptance, and so power
+continues to be used.
 
-The objective is to maximize this ratio, which is a function of how much
-load you place on the network. The load, in turn, is set by the resource
-allocation mechanism. [Figure 3](#power) gives a representative power
-curve, where, ideally, the resource allocation mechanism would operate
-at the peak of this curve. To the left of the peak, the mechanism is
-being too conservative; that is, it is not allowing enough packets to be
-sent to keep the links busy. To the right of the peak, so many packets
-are being allowed into the network that increases in delay due to
-queuing are starting to dominate any small gains in throughput.
+.. [*] Since this is not a queuing theory book, we provide only this
+       brief description of an M/M/1 queue. The 1 means it has a
+       single server, and the Ms mean that the distribution of both
+       packet arrival and service times is *Markovian,* that is,
+       exponential.
+
+The objective is to maximize this ratio, which is a function of how
+much load you place on the network. The load, in turn, is set by the
+resource allocation mechanism. :numref:`Figure %s <fig-power>` gives a
+representative power curve, where, ideally, the resource allocation
+mechanism would operate at the peak of this curve. To the left of the
+peak, the mechanism is being too conservative; that is, it is not
+allowing enough packets to be sent to keep the links busy. To the
+right of the peak, so many packets are being allowed into the network
+that increases in delay due to queuing are starting to dominate any
+small gains in throughput.
 
 Interestingly, this power curve looks very much like the system
 throughput curve in a timesharing computer system. System throughput
@@ -375,28 +390,30 @@ improves as more jobs are admitted into the system, until it reaches a
 point when there are so many jobs running that the system begins to
 thrash (spends all of its time swapping memory pages) and the throughput
 begins to drop.
+   
+.. _fig-power:
+.. figure:: figures/f06-03-9780123850591.png
+   :width: 350px
+   :align: center
 
-<figure class="line">
-	<a id="power"></a>
-	<img src="figures/f06-03-9780123850591.png" width="350px"/>
-	<figcaption>Ratio of throughput to delay as a function of load.</figcaption>
-</figure>
+   Ratio of throughput to delay as a function of load.
 
 As we will see in later sections of this chapter, many
 congestion-control schemes are able to control load in only very crude
-ways; that is, it is simply not possible to turn the "knob" a little and
-allow only a small number of additional packets into the network. As a
-consequence, network designers need to be concerned about what happens
-even when the system is operating under extremely heavy load—that is,
-at the rightmost end of the curve in [Figure 3](#power). Ideally, we
-would like to avoid the situation in which the system throughput goes to
-zero because the system is thrashing. In networking terminology, we want
-a system that is *stable*—where packets continue to get through the
-network even when the network is operating under heavy load. If a
-mechanism is not stable, the network may experience *congestion
-collapse*.
+ways; that is, it is simply not possible to turn the “knob” a little
+and allow only a small number of additional packets into the
+network. As a consequence, network designers need to be concerned
+about what happens even when the system is operating under extremely
+heavy load—that is, at the rightmost end of the curve in
+:numref:`Figure %s <fig-power>`. Ideally, we would like to avoid the
+situation in which the system throughput goes to zero because the
+system is thrashing. In networking terminology, we want a system that
+is *stable*—where packets continue to get through the network even
+when the network is operating under heavy load. If a mechanism is not
+stable, the network may experience *congestion collapse*.
 
-### Fair Resource Allocation
+Fair Resource Allocation
+~~~~~~~~~~~~~~~~~~~~~~~~
 
 The effective utilization of network resources is not the only criterion
 for judging a resource allocation scheme. We must also consider the
@@ -409,64 +426,61 @@ some link while a file transfer receives only 10 kbps over the same
 link.
 
 In the absence of explicit information to the contrary, when several
-flows share a particular link, we would like for each flow to receive an
-equal share of the bandwidth. This definition presumes that a *fair*
-share of bandwidth means an *equal* share of bandwidth. But, even in the
-absence of reservations, equal shares may not equate to fair shares.
-Should we also consider the length of the paths being compared? For
-example, as illustrated in [Figure 4](#path-len), what is fair when one
-four-hop flow is competing with three one-hop flows?
+flows share a particular link, we would like for each flow to receive
+an equal share of the bandwidth. This definition presumes that a
+*fair* share of bandwidth means an *equal* share of bandwidth. But,
+even in the absence of reservations, equal shares may not equate to
+fair shares.  Should we also consider the length of the paths being
+compared? For example, as illustrated in :numref:`Figure %s
+<fig-path-len>`, what is fair when one four-hop flow is competing with
+three one-hop flows?
+   
+.. _fig-path-len:
+.. figure:: figures/f06-04-9780123850591.png
+   :width: 600px
+   :align: center
 
-<figure class="line">
-	<a id="path-len"></a>
-	<img src="figures/f06-04-9780123850591.png" width="600px"/>
-	<figcaption>One four-hop flow competing with three one-hop
-	flows.</figcaption>
-</figure>
+   One four-hop flow competing with three one-hop flows.
 
 Assuming that fair implies equal and that all paths are of equal length,
 networking researcher Raj Jain proposed a metric that can be used to
-quantify the fairness of a congestion-control mechanism. Jain's fairness
+quantify the fairness of a congestion-control mechanism. Jain’s fairness
 index is defined as follows. Given a set of flow throughputs
 
-$$
-(x_{1}, x_{2}, \ldots , x_{n})
-$$
+.. math::
 
-(measured in consistent
-units such as bits/second), the following function assigns a fairness
-index to the flows:
+   (x_{1}, x_{2}, \ldots , x_{n})
 
-$$
-f(x_{1}, x_{2}, \ldots ,x_{n}) = \frac{( \sum_{i=1}^{n} x_{i}
-)^{2}} {n  \sum_{i=1}^{n} x_{i}^{2}}
-$$
+(measured in consistent units such as bits/second), the following
+function assigns a fairness index to the flows:
 
-The fairness index
-always results in a number between 0 and 1, with 1 representing greatest
-fairness. To understand the intuition behind this metric, consider the
-case where all $$n$$ flows receive a throughput of 1 unit of data per
-second. We can see that the fairness index in this case is
+.. math::
 
-$$
-\frac{n^2}{n \times n} = 1
-$$
+   f(x_{1}, x_{2}, \ldots ,x_{n}) = \frac{( \sum_{i=1}^{n} x_{i}
+   )^{2}} {n  \sum_{i=1}^{n} x_{i}^{2}}
 
-Now, suppose one flow receives
-a throughput of $$1 + \Delta$$. Now the fairness index is
+The fairness index always results in a number between 0 and 1, with 1
+representing greatest fairness. To understand the intuition behind this
+metric, consider the case where all *n* flows receive a throughput of
+1 unit of data per second. We can see that the fairness index in this
+case is
 
-$$
-\frac{((n - 1) + 1 + \Delta)^2}{n(n - 1 + (1 + \Delta)^2)}
-= \frac{n^2 + 2n\Delta + \Delta^2}{n^2 + 2n\Delta + n\Delta^2}
-$$
+.. math::
 
-Note that the denominator exceeds the
-numerator by $$(n-1)\Delta^2$$. Thus, whether the odd flow out was getting
-more or less than all the other flows (positive or negative $$\Delta$$),
-the fairness index has now dropped below one. Another simple case to
-consider is where only $$k$$ of the $$n$$ flows receive equal throughput,
-and the remaining $$n-k$$ users receive zero throughput, in which case the
-fairness index drops to $$k/n$$.
+   \frac{n^2}{n \times n} = 1
 
+Now, suppose one flow receives a throughput of :math:`1 + \Delta`. 
+Now the fairness index is
 
+.. math::
 
+   \frac{((n - 1) + 1 + \Delta)^2}{n(n - 1 + (1 + \Delta)^2)}
+   = \frac{n^2 + 2n\Delta + \Delta^2}{n^2 + 2n\Delta + n\Delta^2}
+
+Note that the denominator exceeds the numerator by :math:`(n-1)\Delta^2`.
+Thus, whether the odd flow out was getting more or less than all the
+other flows (positive or negative :math:`\Delta`), the fairness index has 
+now dropped below one. Another simple case to
+consider is where only *k* of the *n* flows receive equal throughput,
+and the remaining *n-k* users receive zero throughput, in which case the
+fairness index drops to \ *k/n*.
