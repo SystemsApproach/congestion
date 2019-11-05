@@ -998,4 +998,4 @@ still up to the application to adapt to these changes in the available
 rate, but as we will see in the next chapter, many real-time
 applications are quite adaptable.
 
-{% include "../sidebars/diff-serve.md" %}
+.. include:: ../sidebars/diff-serve.rst
