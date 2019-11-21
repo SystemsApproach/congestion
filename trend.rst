@@ -25,7 +25,7 @@ ocean or launching a satellite into space.
 
 But with the advent of technologies like DWDM (:ref:`Section 3.1
 <3.1 Switching Basics>`) and MPLS (:ref:`Section 4.4 <4.4
-Multiprotocol Lable Switching>`), we don’t always have to lay more fiber,
+Multiprotocol Label Switching>`), we don’t always have to lay more fiber,
 but can instead turn on additional wavelengths or establish new circuits
 between any pair of sites. (These sites need not be directly connected
 by fiber. For example, a wavelength between Boston and San Francisco
